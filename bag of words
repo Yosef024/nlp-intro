@@ -1,0 +1,75 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+dataset=pd.read_csv('Restaurant_Reviews.tsv',delimiter='\t',quoting=3)
+
+import re
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
+corpus=[]
+
+for i in range(0,1000):
+    review = re.sub('[^a-zA-Z]',' ',dataset['Review'][i])
+    review=review.lower()
+    review=review.split()
+    ps=PorterStemmer()
+    sw=stopwords.words('english')
+    sw.remove('not')
+    review=[ps.stem(w) for w in review if not w in set(sw)]
+    review=' '.join(review)
+    corpus.append(review)
+print(corpus)
+
+from sklearn.feature_extraction.text import CountVectorizer
+cv=CountVectorizer(max_features=1500)
+x=cv.fit_transform(corpus).toarray()
+y=dataset.iloc[:,-1].values
+print(len(x[0]))
+print(y)
+
+from sklearn.model_selection import train_test_split
+xtrain,xtest,ytrain,ytest=train_test_split(x,y,train_size=0.8,random_state=0)
+
+from sklearn.naive_bayes import GaussianNB
+nb=GaussianNB()
+nb.fit(xtrain,ytrain)
+ynb=nb.predict(xtest)
+
+from sklearn.neighbors import KNeighborsClassifier
+kn=KNeighborsClassifier(n_neighbors=5)
+kn.fit(xtrain,ytrain)
+ykn=kn.predict(xtest)
+
+from sklearn.tree import DecisionTreeClassifier
+dtc=DecisionTreeClassifier()
+dtc.fit(xtrain,ytrain)
+ydtc=dtc.predict(xtest)
+
+from sklearn.linear_model import LogisticRegression
+lr=LogisticRegression()
+lr.fit(xtrain,ytrain)
+ylr=lr.predict(xtest)
+
+from sklearn.ensemble import RandomForestClassifier
+rfc=RandomForestClassifier()
+rfc.fit(xtrain,ytrain)
+yrfc=rfc.predict(xtest)
+
+from sklearn.metrics import accuracy_score,confusion_matrix
+print(accuracy_score(ytest,ynb),'naive bayes')
+print(confusion_matrix(ytest,ynb))
+
+print(accuracy_score(ytest,ykn),'k neighbors')
+print(confusion_matrix(ytest,ykn))
+
+print(accuracy_score(ytest,ydtc),'tree')
+print(confusion_matrix(ytest,ydtc))
+
+print(accuracy_score(ytest,ylr),'logistic')
+print(confusion_matrix(ytest,ylr))
+
+print(accuracy_score(ytest,yrfc),'random forest')
+print(confusion_matrix(ytest,yrfc))
